@@ -33,7 +33,7 @@ def read_images():
     return _read_images(44350)
 
 def read_sample_images():
-    return _read_images(20)
+    return _read_images(13)
 
 def _read_images(upper_limit):
     for index in xrange(10, upper_limit):

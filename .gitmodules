@@ -1,0 +1,3 @@
+[submodule "conv_net"]
+	path = conv_net
+	url = https://github.com/gozmo/conv_net
