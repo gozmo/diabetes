@@ -13,11 +13,10 @@ def read_training_set():
     X = []
     y = np.array([])
     for ((name_left, img_left),(name_right, img_right)) in samples:
-        print name_left
         row_left = labels[labels["image"] == name_left]
         label_left = row_left.values[0][1]
         X.append(img_left)
-        np.append(y, label_left)
+        y = np.append(y, label_left)
 
         row_right = labels[labels["image"] == name_right]
         label_right = row_right.values[0][1]
@@ -33,7 +32,7 @@ def read_images():
     return _read_images(44350)
 
 def read_sample_images():
-    return _read_images(13)
+    return _read_images(20)
 
 def _read_images(upper_limit):
     for index in xrange(10, upper_limit):
@@ -47,12 +46,18 @@ def _read_file_pair(path, index):
     filename_right = "%s/%s_right.jpeg" % (path, index)
     filename_left = "%s/%s_left.jpeg" % (path, index)
 
-    img_left = Image.open(open(filename_left))
-    img_right = Image.open(open(filename_right))
+    img_left = _read_image(filename_left)
+    img_right = _read_image(filename_right)
 
-    img_left = np.asarray(img_left, dtype='float64') / 256.
-    img_right = np.asarray(img_right, dtype='float64') / 256.
-
-    #img_left = img_left.transpose(2, 0, 1).reshape(1, 3, HEIGHT, WIDTH)
-    #img_right = img_right.transpose(2, 0, 1).reshape(1, 3, HEIGHT, WIDTH)
     return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
+
+def _read_image(filepath):
+    im = Image.open(open(filepath))
+    (r,g,b) = im.split() #separate the differetn chanels
+    fr=np.array(r,dtype=np.float32).flatten()
+    fg=np.array(g,dtype=np.float32).flatten()
+    fb=np.array(b,dtype=np.float32).flatten()
+    feature = np.concatenate((fr,fg,fb),axis=0)#we want theanos reshape to be able to separate R G and B later
+    feature = feature/255. #normalize
+    feature = feature - feature.mean()
+    return feature
