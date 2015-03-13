@@ -41,7 +41,8 @@ def read_labels():
     return labels
 
 def read_images():
-    return _read_images(44350)
+    #return _read_images(44350)
+    return _read_images(10000)
 
 def read_sample_images():
     return _read_images(20)
@@ -49,7 +50,7 @@ def read_sample_images():
 def _read_images(upper_limit):
     for index in xrange(10, upper_limit):
         try:
-            left, right = _read_file_pair("train_set", index)
+            left, right = _read_file_pair("train_set_resize", index)
         except IOError as e:
             continue
         yield left, right
