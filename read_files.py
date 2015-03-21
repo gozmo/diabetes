@@ -42,40 +42,46 @@ def read_labels():
 
 def read_images():
     #return _read_images(44350)
-    return _read_images(10000)
+    return _read_images(1000)
 
 def read_sample_images():
     return _read_images(20)
 
-def _read_images(upper_limit):
+def read_sample_images_3d():
+    return _read_images(20, flatten=False)
+
+def _read_images(upper_limit, flatten=False):
     for index in xrange(10, upper_limit):
         try:
-            left, right = _read_file_pair("train_set_resize", index)
+            left, right = _read_file_pair("train_set_resize", index, flatten)
         except IOError as e:
             continue
         yield left, right
 
-def _read_file_pair(path, index):
+def _read_file_pair(path, index, flatten):
     filename_right = "%s/%s_right.jpeg" % (path, index)
     filename_left = "%s/%s_left.jpeg" % (path, index)
 
-    img_left = _read_image(filename_left)
-    img_right = _read_image(filename_right, mirror=True)
+    img_left = _read_image(filename_left, flatten=flatten)
+    img_right = _read_image(filename_right, mirror=True, flatten=flatten)
 
     return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
 
-def _read_image(filepath, mirror=False):
+def _read_image(filepath, flatten, mirror=False):
     im = Image.open(open(filepath))
     if mirror:
         im = ImageOps.mirror(im)
 
     im = im.resize((300, 200))
+    if flatten:
+        (r,g,b) = im.split() #separate the differetn chanels
+        fr=np.array(r,dtype=np.float32).flatten()
+        fg=np.array(g,dtype=np.float32).flatten()
+        fb=np.array(b,dtype=np.float32).flatten()
+        im = np.concatenate((fr,fg,fb),axis=0)#we want theanos reshape to be able to separate R G and B later
+    else:
+        im = np.ndarray(im)
 
-    (r,g,b) = im.split() #separate the differetn chanels
-    fr=np.array(r,dtype=np.float32).flatten()
-    fg=np.array(g,dtype=np.float32).flatten()
-    fb=np.array(b,dtype=np.float32).flatten()
-    feature = np.concatenate((fr,fg,fb),axis=0)#we want theanos reshape to be able to separate R G and B later
-    feature = feature/255. #normalize
-    feature = feature - feature.mean()
-    return feature
+    im = im/255. #normalize
+    im = im -im.mean()
+    return im
