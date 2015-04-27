@@ -1,5 +1,5 @@
 import read_files
-from conv_net.networks.net2 import Network
+from conv_net.networks.net4 import Network
 import numpy as np
 
 
@@ -30,20 +30,15 @@ def _create_e_matrix(o_matrix):
     return e_matrix
 
 if __name__ == "__main__":
-    print "Loading training set",
-    X,y = read_files.read_training_set()
-    print "done"
-
-    input_size = len(X[0])
-    output_size = len(y[0])
 
     print "Creating network",
-    net1 = Network()
+    net = Network()
     print "done"
     print "Training network",
-    net1.train(X,y)
+    for X,y in read_files.read_training_set():
+        net.train(X,y)
     print "done"
 
-    results = net1.predict(X)
+    results = net.predict(X)
     results_scalar = [ result.argmax() for result in results]
     target_scalar = [target.argmax() for target in y]

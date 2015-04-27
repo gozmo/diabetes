@@ -9,10 +9,12 @@ from scipy import misc
 
 def read_training_set():
     labels = read_labels()
-    samples = read_sample_images()
+    #samples = read_sample_images()
     #samples = read_images()
+    samples = read_images_3d()
     X = []
     y = []
+    counter = range(2000)
     for ((name_left, img_left),(name_right, img_right)) in samples:
         row_left = labels[labels["image"] == name_left]
         label_left = row_left.values[0][1]
@@ -26,10 +28,22 @@ def read_training_set():
         vector = _label_to_vector(label_right)
         y.append(vector)
 
+        counter.pop()
+        if len(counter) == 0:
+            counter = range(2000)
+            yield _return_training_set(X,y)
+            X = []
+            y = []
+
+
+    yield _return_training_set(X,y)
+def _return_training_set(X,y):
     y = np.array(y)
     X = np.array(X)
     X = X.astype(np.float32)
+    X = X.reshape(-1, 1, 100, 100)
     return X,y
+
 
 def _label_to_vector(label):
     vector = np.array([0.0]*5)
@@ -43,7 +57,11 @@ def read_labels():
 
 def read_images():
     #return _read_images(44350)
-    return _read_images(1000)
+    return _read_images(44350, flatten=True)
+
+def read_images_3d():
+    #return _read_images(44350)
+    return _read_images(1000, flatten=False)
 
 def read_sample_images():
     return _read_images(20, flatten=True)
@@ -69,7 +87,8 @@ def _read_file_pair(path, index, flatten):
     return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
 
 def _read_image(filepath, flatten, mirror=False):
-    im = misc.imread(filepath, flatten=True)
+    #im = misc.imread(filepath, flatten=True)
+    im = misc.imread(filepath)
 
     if flatten:
         im = im.flatten()
