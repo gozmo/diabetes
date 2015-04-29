@@ -1,5 +1,5 @@
 import read_files
-from conv_net.networks.net4 import Network
+from conv_net.networks.net1 import Network
 import numpy as np
 
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     net = Network()
     print "done"
     print "Training network",
-    for X,y in read_files.read_training_set():
+    for X,y in read_files.read_training_set(flatten=True):
         net.train(X,y)
     print "done"
 
