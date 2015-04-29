@@ -1,13 +1,14 @@
-import read_files
 from conv_net.networks.net4 import Network
 from kappa import calculate_kappa
+from read_files import Dataset
 
 if __name__ == "__main__":
+    dataset = Dataset(False, training_set_size=50)
     print "Creating network",
     net = Network()
     print "done"
     print "Training network",
-    for X,y in read_files.read_training_set(flatten=False, training_set_size=40):
+    for X,y in dataset.read_training_set():
         net.train(X,y)
     print "done"
 

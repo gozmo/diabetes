@@ -5,89 +5,85 @@ from PIL import Image
 from PIL import ImageOps
 from scipy import misc
 
-#mirror all the images so left and right opticus nerve is located at the same spot in every image
+class Dataset:
+    def __init__(self, flatten, training_set_size=100, height=100, width=100):
+        self._training_set_size = training_set_size
+        self._height = height
+        self._width = width
+        self._flatten = flatten
 
-def read_training_set(flatten=False, training_set_size=100, height=100, width=100):
-    labels = read_labels()
-    if flatten:
-        samples = read_images(training_set_size)
-    else:
-        samples = read_images_3d(training_set_size)
-    X = []
-    y = []
-    counter_function = lambda: range(4000)
-    counter = counter_function()
-    for ((name_left, img_left),(name_right, img_right)) in samples:
-        row_left = labels[labels["image"] == name_left]
-        label_left = row_left.values[0][1]
-        X.append(img_left)
-        vector = _label_to_vector(label_left)
-        y.append(vector)
+    def read_training_set(self):
+        labels = self._read_labels()
+        samples = self._read_images()
+        X = []
+        y = []
+        counter_function = lambda: range(4000)
+        counter = counter_function()
+        for ((name_left, img_left),(name_right, img_right)) in samples:
+            row_left = labels[labels["image"] == name_left]
+            label_left = row_left.values[0][1]
+            X.append(img_left)
+            vector = self._label_to_vector(label_left)
+            y.append(vector)
 
-        row_right = labels[labels["image"] == name_right]
-        label_right = row_right.values[0][1]
-        X.append(img_right)
-        vector = _label_to_vector(label_right)
-        y.append(vector)
+            row_right = labels[labels["image"] == name_right]
+            label_right = row_right.values[0][1]
+            X.append(img_right)
+            vector = self._label_to_vector(label_right)
+            y.append(vector)
 
-        counter.pop()
-        if len(counter) == 0:
-            counter = counter_function()
-            yield _return_training_set(X,y,flatten, height, width)
-            X = []
-            y = []
-
-
-    yield _return_training_set(X,y, flatten, height, width)
-
-def _return_training_set(X, y, flatten, height, width):
-    y = np.array(y)
-    X = np.array(X)
-    X = X.astype(np.float32)
-    if not flatten:
-        X = X.reshape(-1, 1, height, width)
-    return X,y
+            counter.pop()
+            if len(counter) == 0:
+                counter = counter_function()
+                yield self_return_training_set(X,y)
+                X = []
+                y = []
 
 
-def _label_to_vector(label):
-    vector = np.array([0.0]*5)
-    vector[label] = 1.0
-    vector = vector.astype(np.float32)
-    return vector
+        yield self._return_training_set(X,y)
 
-def read_labels():
-    labels = pd.read_csv("trainLabels.csv")
-    return labels
+    def _return_training_set(self, X, y):
+        y = np.array(y)
+        X = np.array(X)
+        X = X.astype(np.float32)
+        if not self._flatten:
+            X = X.reshape(-1, 1, self._height, self._width)
+        return X,y
 
-def read_images(training_set_size):
-    return _read_images(training_set_size, flatten=True)
 
-def read_images_3d(training_set_size):
-    return _read_images(training_set_size, flatten=False)
+    def _label_to_vector(self, label):
+        vector = np.array([0.0]*5)
+        vector[label] = 1.0
+        vector = vector.astype(np.float32)
+        return vector
 
-def _read_images(upper_limit, flatten=False):
-    for index in xrange(10, upper_limit):
-        try:
-            left, right = _read_file_pair("train_set_resize", index, flatten)
-        except IOError as e:
-            continue
-        yield left, right
+    def _read_labels(self):
+        labels = pd.read_csv("trainLabels.csv")
+        return labels
 
-def _read_file_pair(path, index, flatten):
-    filename_right = "%s/%s_right.jpeg" % (path, index)
-    filename_left = "%s/%s_left.jpeg" % (path, index)
+    def _read_images(self):
+        for index in xrange(10, self._training_set_size):
+            try:
+                left, right = self._read_file_pair("train_set_resize", index)
+            except IOError as e:
+                continue
+            yield left, right
 
-    img_left = _read_image(filename_left, flatten=flatten)
-    img_right = _read_image(filename_right, mirror=True, flatten=flatten)
+    def _read_file_pair(self, path, index):
+        filename_right = "%s/%s_right.jpeg" % (path, index)
+        filename_left = "%s/%s_left.jpeg" % (path, index)
 
-    return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
+        img_left = self._read_image(filename_left)
+        img_right = self._read_image(filename_right)
 
-def _read_image(filepath, flatten, mirror=False):
-    im = misc.imread(filepath)
+        return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
 
-    if flatten:
-        im = im.flatten()
+    def _read_image(self, filepath):
+        im = misc.imread(filepath)
 
-    im = im/255. #normalize
-    im = im -im.mean()
-    return im
+        if self._flatten:
+            im = im.flatten()
+
+        im = im/255. #normalize
+        im = im -im.mean()
+        return im
