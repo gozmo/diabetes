@@ -7,15 +7,16 @@ from scipy import misc
 
 #mirror all the images so left and right opticus nerve is located at the same spot in every image
 
-def read_training_set(flatten=False):
+def read_training_set(flatten=False, training_set_size=100, height=100, width=100):
     labels = read_labels()
     if flatten:
-        samples = read_images()
+        samples = read_images(training_set_size)
     else:
-        samples = read_images_3d()
+        samples = read_images_3d(training_set_size)
     X = []
     y = []
-    counter = range(2000)
+    counter_function = lambda: range(4000)
+    counter = counter_function()
     for ((name_left, img_left),(name_right, img_right)) in samples:
         row_left = labels[labels["image"] == name_left]
         label_left = row_left.values[0][1]
@@ -31,20 +32,20 @@ def read_training_set(flatten=False):
 
         counter.pop()
         if len(counter) == 0:
-            counter = range(2000)
-            yield _return_training_set(X,y,flatten)
+            counter = counter_function()
+            yield _return_training_set(X,y,flatten, height, width)
             X = []
             y = []
 
 
-    yield _return_training_set(X,y)
+    yield _return_training_set(X,y, flatten, height, width)
 
-def _return_training_set(X, y, flatten):
+def _return_training_set(X, y, flatten, height, width):
     y = np.array(y)
     X = np.array(X)
     X = X.astype(np.float32)
     if not flatten:
-        X = X.reshape(-1, 1, 100, 100)
+        X = X.reshape(-1, 1, height, width)
     return X,y
 
 
@@ -58,11 +59,11 @@ def read_labels():
     labels = pd.read_csv("trainLabels.csv")
     return labels
 
-def read_images():
-    return _read_images(44350, flatten=True)
+def read_images(training_set_size):
+    return _read_images(training_set_size, flatten=True)
 
-def read_images_3d():
-    return _read_images(1000, flatten=False)
+def read_images_3d(training_set_size):
+    return _read_images(training_set_size, flatten=False)
 
 def _read_images(upper_limit, flatten=False):
     for index in xrange(10, upper_limit):
