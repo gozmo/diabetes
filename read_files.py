@@ -13,20 +13,20 @@ class Dataset:
         self._flatten = flatten
 
     def read_training_set(self):
-        labels = self._read_labels()
+        self._labels = self._read_labels()
         samples = self._read_images()
         X = []
         y = []
         counter_function = lambda: range(4000)
         counter = counter_function()
         for ((name_left, img_left),(name_right, img_right)) in samples:
-            row_left = labels[labels["image"] == name_left]
+            row_left = self._labels[self._labels["image"] == name_left]
             label_left = row_left.values[0][1]
             X.append(img_left)
             vector = self._label_to_vector(label_left)
             y.append(vector)
 
-            row_right = labels[labels["image"] == name_right]
+            row_right = self._labels[self._labels["image"] == name_right]
             label_right = row_right.values[0][1]
             X.append(img_right)
             vector = self._label_to_vector(label_right)
@@ -38,18 +38,17 @@ class Dataset:
                 yield self_return_training_set(X,y)
                 X = []
                 y = []
-
-
         yield self._return_training_set(X,y)
 
     def _return_training_set(self, X, y):
         y = np.array(y)
         X = np.array(X)
         X = X.astype(np.float32)
+        print "before flatten", X.shape
         if not self._flatten:
             X = X.reshape(-1, 1, self._height, self._width)
+        print "after flatten", X.shape
         return X,y
-
 
     def _label_to_vector(self, label):
         vector = np.array([0.0]*5)
@@ -79,11 +78,14 @@ class Dataset:
         return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
 
     def _read_image(self, filepath):
-        im = misc.imread(filepath)
+        image = misc.imread(filepath)
 
-        if self._flatten:
-            im = im.flatten()
+        grey = np.zeros((image.shape[0], image.shape[1])) # init 2D numpy array
+        # get row number
+        for rownum in range(len(image)):
+               for colnum in range(len(image[rownum])):
+                         grey[rownum][colnum] = np.average(image[rownum][colnum])
 
-        im = im/255. #normalize
-        im = im -im.mean()
-        return im
+        grey = grey/255. #normalize
+        grey = grey -grey.mean()
+        return grey
