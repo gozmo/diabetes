@@ -17,7 +17,7 @@ class Dataset:
         samples = self._read_images()
         X = []
         y = []
-        counter_function = lambda: range(4000)
+        counter_function = lambda: range(20000)
         counter = counter_function()
         for ((name_left, img_left),(name_right, img_right)) in samples:
             row_left = self._labels[self._labels["image"] == name_left]
@@ -35,7 +35,7 @@ class Dataset:
             counter.pop()
             if len(counter) == 0:
                 counter = counter_function()
-                yield self_return_training_set(X,y)
+                yield self._return_training_set(X,y)
                 X = []
                 y = []
         yield self._return_training_set(X,y)
@@ -44,10 +44,8 @@ class Dataset:
         y = np.array(y)
         X = np.array(X)
         X = X.astype(np.float32)
-        print "before flatten", X.shape
         if not self._flatten:
             X = X.reshape(-1, 1, self._height, self._width)
-        print "after flatten", X.shape
         return X,y
 
     def _label_to_vector(self, label):
