@@ -42,11 +42,15 @@ class Dataset:
 
     def _return_training_set(self, X, y):
         y = np.array(y)
+        X = self._reshape_input_set(X)
+        return X,y
+
+    def _reshape_input_set(self, X):
         X = np.array(X)
         X = X.astype(np.float32)
         if not self._flatten:
             X = X.reshape(-1, 1, self._height, self._width)
-        return X,y
+        return X
 
     def _label_to_vector(self, label):
         vector = np.array([0.0]*5)
@@ -61,7 +65,7 @@ class Dataset:
     def _read_images(self):
         for index in xrange(10, self._training_set_size):
             try:
-                left, right = self._read_file_pair("train_set_resize", index)
+                left, left_name, right, right_name = self._read_file_pair("train_set_resize", index)
             except IOError as e:
                 continue
             yield left, right
@@ -73,7 +77,7 @@ class Dataset:
         img_left = self._read_image(filename_left)
         img_right = self._read_image(filename_right)
 
-        return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
+        return ("%s_left" % index), img_left , ("%s_right" % index), img_right
 
     def _read_image(self, filepath):
         image = misc.imread(filepath)
@@ -87,3 +91,32 @@ class Dataset:
         grey = grey/255. #normalize
         grey = grey -grey.mean()
         return grey
+
+    def read_test_set(self, test_set_size):
+        self._test_set_size = test_set_size
+        test_set_generator = self._test_set_generator()
+        test_set = []
+        test_set_file_names = []
+        for left, left_name, right, right_name in self._test_set_generator():
+            test_set.append(left)
+            test_set_file_names.append(left_name)
+            test_set.append(right)
+            test_set_file_names(right_name)
+
+        test_set = self._reshape_input_set(test_set)
+        return test_set, test_set_file_names
+
+    def _test_set_generator(self):
+        for index in xrange(self._test_set_size):
+            try:
+                left, left_name, right, right_name = self._read_file_pair("test_set", index)
+            except IOError as e:
+                continue
+            yield left, left_name, right, right_name
+
+    def read_training_set_cross_validation(self, kfold):
+
+        for X,y in self.read_test_set():
+            folds = [randragen(kfold) for x in len(X)]
+            for fold in xrange(kfold):
+

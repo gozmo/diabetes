@@ -6,7 +6,7 @@ from conv_net.utils import log
 
 if __name__ == "__main__":
     log("Reading dataset. ")
-    dataset = Dataset(False, training_set_size=60000)
+    dataset = Dataset(False, training_set_size=60)
     log("Done")
 
     scores = {}
@@ -23,3 +23,14 @@ if __name__ == "__main__":
 
     log(scores)
 
+    log("Reading dataset. ")
+    dataset = Dataset(False, training_set_size=60)
+    log("Done")
+
+    scores = {}
+    kfold = 3
+    dataset.cross_validation(kfold=kfold)
+    for x in xrange(kfold):
+        results_scalar = []
+        target_scalar = []
+        for X,y in dataset.read_training_set_cross_validation(x):
