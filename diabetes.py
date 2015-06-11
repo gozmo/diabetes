@@ -1,6 +1,6 @@
 from conv_net.networks.net3 import Network
 from conv_net import deep
-from kappa import quadratic_weighted_kappa
+from conv_net.utils import quadratic_weighted_kappa
 from read_files import Dataset
 from conv_net.utils import log
 
