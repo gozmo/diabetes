@@ -4,8 +4,9 @@ import pylab
 from PIL import Image
 from PIL import ImageOps
 from scipy import misc
+from conv_net.dataset import BaseDataset
 
-class Dataset:
+class Dataset(BaseDataset):
     def __init__(self, flatten, training_set_size=100, height=100, width=100):
         self._training_set_size = training_set_size
         self._height = height
@@ -40,14 +41,6 @@ class Dataset:
                 y = []
         yield self._return_training_set(X,y)
 
-    def _return_training_set(self, X, y):
-        y = np.array(y)
-        X = np.array(X)
-        X = X.astype(np.float32)
-        if not self._flatten:
-            X = X.reshape(-1, 1, self._height, self._width)
-        return X,y
-
     def _label_to_vector(self, label):
         vector = np.array([0.0]*5)
         vector[label] = 1.0
@@ -74,16 +67,3 @@ class Dataset:
         img_right = self._read_image(filename_right)
 
         return (("%s_left" % index), img_left) , (("%s_right" % index), img_right)
-
-    def _read_image(self, filepath):
-        image = misc.imread(filepath)
-
-        grey = np.zeros((image.shape[0], image.shape[1])) # init 2D numpy array
-        # get row number
-        for rownum in range(len(image)):
-               for colnum in range(len(image[rownum])):
-                         grey[rownum][colnum] = np.average(image[rownum][colnum])
-
-        grey = grey/255. #normalize
-        grey = grey -grey.mean()
-        return grey
