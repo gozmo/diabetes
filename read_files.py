@@ -7,17 +7,11 @@ from scipy import misc
 from conv_net.dataset import BaseDataset
 
 class Dataset(BaseDataset):
-    def __init__(self, flatten, training_set_size=100, height=100, width=100):
-        self._training_set_size = training_set_size
-        self._height = height
-        self._width = width
-        self._flatten = flatten
-
     def read_training_set(self):
         self._labels = self._read_labels()
         samples = self._read_images()
-        X = []
-        y = []
+        self._X = []
+        self._y = []
         counter_function = lambda: range(20000)
         counter = counter_function()
         for ((name_left, img_left),(name_right, img_right)) in samples:
