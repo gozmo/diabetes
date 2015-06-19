@@ -1,36 +1,20 @@
-from conv_net.networks.net3 import Network
+from conv_net.networks.net3 import Network as Net3
 from conv_net import deep
-from kappa import quadratic_weighted_kappa
 from read_files import Dataset
 from conv_net.utils import log
+from conv_net.crossval import crossvalidation
+
+#TODO:
+#-Validation set
+#-pickle nets
+#-ensemble
+#-gradient boosting
 
 if __name__ == "__main__":
     log("Reading dataset. ")
-    dataset = Dataset(False, training_set_size=60)
+    dataset = Dataset(False, training_set_size=600)
     log("Done")
 
-    scores = {}
-    for network in deep.train_network(dataset):
-        results_scalar = []
-        target_scalar = []
-        for X,y in dataset.read_training_set():
-            results = network.predict(X)
-            results_scalar += [result.argmax() for result in results]
-            target_scalar += [target.argmax() for target in y]
-        kappa = quadratic_weighted_kappa(results_scalar, target_scalar)
-        scores[network.name] = kappa
-        log("\tkappa: %s" % (kappa))
+    average, scores = crossvalidation(dataset, Net3, 3)
 
     log(scores)
-
-    log("Reading dataset. ")
-    dataset = Dataset(False, training_set_size=60)
-    log("Done")
-
-    scores = {}
-    kfold = 3
-    dataset.cross_validation(kfold=kfold)
-    for x in xrange(kfold):
-        results_scalar = []
-        target_scalar = []
-        for X,y in dataset.read_training_set_cross_validation(x):
