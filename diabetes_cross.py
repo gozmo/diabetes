@@ -12,7 +12,9 @@ from conv_net.crossval import crossvalidation
 
 if __name__ == "__main__":
     log("Reading dataset. ")
-    dataset = Dataset(False, training_set_size=600)
+    size = 30000
+    log("size: %s" % size )
+    dataset = Dataset(False, training_set_size=size)
     log("Done")
 
     average, scores = crossvalidation(dataset, Net3, 3)

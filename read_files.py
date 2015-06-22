@@ -35,7 +35,6 @@ class Dataset(BaseDataset):
             vector = self._label_to_vector(label_right)
             y.append(vector)
 
-        print "_read_dataset, length", len(X)
         return self._return_training_set(X,y)
 
     def _return_training_set(self, X, y):
@@ -63,15 +62,14 @@ class Dataset(BaseDataset):
     def _read_images(self, path):
         counter = 0
         for index in xrange(self._start_idx, self._end_idx):
-            counter += 1
             if counter == self._training_set_size:
                 break
             try:
                 left_name, left, right_name, right = self._read_file_pair(path, index)
+                yield (left_name, left), (right_name, right)
+                counter += 1
             except IOError as e:
                 continue
-            yield (left_name, left), (right_name, right)
-        print counter
 
     def _read_file_pair(self, path, index):
         filename_right = "%s/%s_right.jpeg" % (path, index)
@@ -116,5 +114,3 @@ class Dataset(BaseDataset):
             except IOError as e:
                 continue
             yield left, left_name, right, right_name
-
-
