@@ -95,22 +95,29 @@ class Dataset(BaseDataset):
 
     def read_test_set(self, test_set_size):
         self._test_set_size = test_set_size
-        test_set_generator = self._test_set_generator()
         test_set = []
         test_set_file_names = []
-        for left, left_name, right, right_name in self._test_set_generator():
+        counter = 5000
+        for left_name, left, right_name, right in self._test_set_generator():
+            counter -= 1
             test_set.append(left)
             test_set_file_names.append(left_name)
             test_set.append(right)
-            test_set_file_names(right_name)
+            test_set_file_names.append(right_name)
+            if counter == 0:
+                test_set = self._reshape_input_set(test_set)
+                yield test_set, test_set_file_names
+                counter = 5000
+                test_set = []
+                test_set_file_names = []
 
         test_set = self._reshape_input_set(test_set)
-        return test_set, test_set_file_names
+        yield test_set, test_set_file_names
 
     def _test_set_generator(self):
         for index in xrange(self._test_set_size):
             try:
-                left, left_name, right, right_name = self._read_file_pair("test_set", index)
+                left_name, left, right_name, right = self._read_file_pair("test_set_resize", index)
             except IOError as e:
                 continue
-            yield left, left_name, right, right_name
+            yield left_name, left, right_name, right
