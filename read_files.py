@@ -3,38 +3,27 @@ import numpy as np
 import pylab
 from PIL import Image
 from PIL import ImageOps
-from scipy import misc
 from conv_net.dataset import BaseDataset
+from os import listdir
+from os.path import isfile, join
 
 class Dataset(BaseDataset):
-    def read_training_set(self):
-        self._start_idx = 0
-        self._end_idx = 29700
-        return self._read_dataset("train_set_resize", "trainLabels.csv")
-
     def read_validation_set(self):
-        self._start_idx = 29700
-        self._end_idx = 46000
-        return self._read_dataset("validation_set_resize", "validationLabels.csv")
+        return self._read_image_set("validation_set_resize", "validationLabels.csv")
 
-    def _read_dataset(self, path, label_path):
+    def read_training_set(self):
+        return self._read_image_set("train_set_resize", "trainLabels.csv")
+
+    def _read_image_set(self, directory_path, label_path):
         labels = self._read_labels(label_path)
-        samples = self._read_images(path)
         X = []
         y = []
-        for ((name_left, img_left),(name_right, img_right)) in samples:
-            row_left = labels[labels["image"] == name_left]
-            label_left = row_left.values[0][1]
-            X.append(img_left)
-            vector = self._label_to_vector(label_left)
-            y.append(vector)
-
-            row_right = labels[labels["image"] == name_right]
-            label_right = row_right.values[0][1]
-            X.append(img_right)
-            vector = self._label_to_vector(label_right)
-            y.append(vector)
-
+        for name, level, index in zip(labels['image'], labels['level'], range(self._training_set_size)):
+            target = self._label_to_vector(level)
+            path = directory_path + "/" + name + ".jpeg"
+            image = self._read_image(path)
+            X.append(image)
+            y.append(target)
         return self._return_training_set(X,y)
 
     def _return_training_set(self, X, y):
@@ -59,60 +48,20 @@ class Dataset(BaseDataset):
         labels = pd.read_csv(filename)
         return labels
 
-    def _read_images(self, path):
-        counter = 0
-        for index in xrange(self._start_idx, self._end_idx):
-            if counter == self._training_set_size:
-                break
-            try:
-                left_name, left, right_name, right = self._read_file_pair(path, index)
-                yield (left_name, left), (right_name, right)
-                counter += 1
-            except IOError as e:
-                continue
+    def read_test_set(self, directory, test_set_size=100000):
+        files = self._list_files_in(directory)
+        X = []
+        image_names = []
+        for image_name, index in zip(files, range(test_set_size)):
+            image_path = directory + "/" + image_name
+            image_name = image_name.replace(".jpeg","")
+            image = self._read_image(image_path)
+            X.append(image)
+            image_names.append(image_name)
+        return self._reshape_input_set(X), image_names
 
-    def _read_file_pair(self, path, index):
-        filename_right = "%s/%s_right.jpeg" % (path, index)
-        filename_left = "%s/%s_left.jpeg" % (path, index)
-
-        img_left = self._read_image(filename_left)
-        img_right = self._read_image(filename_right)
-
-        return ("%s_left" % index), img_left , ("%s_right" % index), img_right
-
-    def _read_image(self, filepath):
-        image = misc.imread(filepath)
-
-        grey = np.zeros((image.shape[0], image.shape[1])) # init 2D numpy array
-        # get row number
-        for rownum in range(len(image)):
-               for colnum in range(len(image[rownum])):
-                         grey[rownum][colnum] = np.average(image[rownum][colnum])
-
-        grey = grey/255. #normalize
-        grey = grey -grey.mean()
-        return grey
-
-    def read_test_set(self, test_set_size):
-        self._test_set_size = test_set_size
-        test_set = []
-        test_set_file_names = []
-        counter = 5000
-        for left_name, left, right_name, right in self._test_set_generator():
-            counter -= 1
-            test_set.append(left)
-            test_set_file_names.append(left_name)
-            test_set.append(right)
-            test_set_file_names.append(right_name)
-            if counter == 0:
-                test_set = self._reshape_input_set(test_set)
-                yield test_set, test_set_file_names
-                counter = 5000
-                test_set = []
-                test_set_file_names = []
-
-        test_set = self._reshape_input_set(test_set)
-        yield test_set, test_set_file_names
+    def _list_files_in(self, directory):
+        return [ f for f in listdir(directory) if isfile(join(directory,f)) ]
 
     def _test_set_generator(self):
         for index in xrange(self._test_set_size):

@@ -12,7 +12,7 @@ from conv_net.crossval import crossvalidation
 
 if __name__ == "__main__":
     log("Reading dataset. ")
-    size = 30000
+    size = 300
     log("size: %s" % size )
     dataset = Dataset(False, training_set_size=size)
     log("Done")
